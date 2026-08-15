@@ -27,12 +27,9 @@ class MapDelegate extends WatchUi.BehaviorDelegate {
 
     function onTap(evt) {
         var coords = evt.getCoordinates();
-        var y = coords[1];
-        var screenH = System.getDeviceSettings().screenHeight;
-        if (y < screenH / 3) {
-            _view.zoomIn();
-        } else if (y > screenH * 2 / 3) {
-            _view.zoomOut();
+        // D'abord tester les boutons zoom
+        if (_view.handleTap(coords[0], coords[1])) {
+            return true;
         }
         return true;
     }

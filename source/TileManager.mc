@@ -164,6 +164,7 @@ class TileManager {
     }
 
     function clearCache() {
+        // Ne vide plus tout le cache — les tuiles des zooms adjacents sont conservées
         _cache = {};
         _queue = [];
     }
