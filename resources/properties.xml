@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<properties>
+    <property id="apiKey" type="string"></property>
+    <property id="tileBufferSize" type="number">16</property>
+    <property id="defaultZoom" type="number">10</property>
+    <!-- Variables de substitution : {z} {x} {y} {k} (apiKey) -->
+    <property id="tileUrlTemplate" type="string">https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.png?apiKey={k}</property>
+</properties>
