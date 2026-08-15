@@ -1,0 +1,48 @@
+# .github/workflows/build-docker.yml
+# Version alternative utilisant l'image Docker de matco (SDK pré-installé)
+# Plus fiable car pas de téléchargement SDK à chaque run
+# 
+# Utilisation : renommer en build.yml ou activer les deux workflows
+
+name: Build (Docker)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/matco/connectiq-tester:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate Developer Key
+        run: |
+          openssl genrsa -out /tmp/dev_key.pem 4096
+          openssl pkcs8 -topk8 -inform PEM -outform DER \
+            -in /tmp/dev_key.pem -out /tmp/developer_key.der -nocrypt
+          rm /tmp/dev_key.pem
+
+      - name: Compile
+        run: |
+          mkdir -p bin
+          # L'image Docker a monkeyc dans le PATH
+          monkeyc \
+            -d d2airx10 \
+            -f monkey.jungle \
+            -o bin/OpenAipMap.prg \
+            -y /tmp/developer_key.der \
+            -w
+          ls -la bin/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openaip-map-prg
+          path: bin/OpenAipMap.prg
+          retention-days: 30
