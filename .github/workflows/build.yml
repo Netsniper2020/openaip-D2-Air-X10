@@ -37,7 +37,7 @@ jobs:
 
       - name: Install SDK
         run: |
-          connect-iq-sdk-manager sdk set 7.4.3
+          connect-iq-sdk-manager sdk set 9.2.0
           echo "$(connect-iq-sdk-manager sdk current-path --bin)" >> $GITHUB_PATH
 
       - name: Download device files
