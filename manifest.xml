@@ -6,7 +6,7 @@
              version="3">
 
     <iq:application
-        id="dd8edcf8-bc58-440a-8997-3d3bac2a5acf"
+        id="521f1fd1-31a3-466a-a0ba-ded35b82c046"
         type="watch-app"
         name="@Strings.AppName"
         entry="OpenAipApp"
