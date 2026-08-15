@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<strings>
+    <string id="AppName">OpenAIP Map</string>
+    <string id="SettingApiKeyTitle">Clé API OpenAIP</string>
+    <string id="SettingBufferSizeTitle">Taille buffer (tuiles)</string>
+    <string id="SettingDefaultZoomTitle">Zoom par défaut</string>
+    <string id="SettingTileUrlTitle">URL template tuiles</string>
+    <string id="NoGps">Acquisition GPS...</string>
+    <string id="Loading">Chargement tuiles...</string>
+    <string id="NoConnection">Pas de connexion</string>
+</strings>
