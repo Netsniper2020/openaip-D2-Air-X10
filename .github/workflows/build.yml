@@ -1,124 +1,76 @@
-# .github/workflows/build.yml
-# Compile l'app Connect IQ à chaque push et produit le .prg en artifact
-# Téléchargeable depuis l'app GitHub Mobile : Actions → run → Artifacts
+# Compile l'app Connect IQ via connect-iq-sdk-manager-cli
+# Secrets GitHub requis :
+#   GARMIN_USERNAME : email du compte Garmin developer
+#   GARMIN_PASSWORD : mot de passe Garmin
 
 name: Build Connect IQ
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:  # permet de déclencher manuellement depuis l'app mobile
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # Installer Java (requis par le SDK Connect IQ)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # Télécharger le SDK Connect IQ
-      # Note : l'URL du SDK peut changer. Vérifier sur https://developer.garmin.com/connect-iq/sdk/
-      - name: Download Connect IQ SDK
+      - name: Install connect-iq-sdk-manager-cli
         run: |
-          SDK_VERSION="7.3.1"
-          SDK_URL="https://developer.garmin.com/downloads/connect-iq/sdks/connectiq-sdk-lin-${SDK_VERSION}-2024-11-28-2edd1fd24.zip"
-          
-          echo "=== Downloading Connect IQ SDK ${SDK_VERSION} ==="
-          mkdir -p $HOME/connectiq-sdk
-          
-          # Tenter le téléchargement — si l'URL a changé, le build échouera ici
-          # Dans ce cas, mettre à jour SDK_URL depuis https://developer.garmin.com/connect-iq/sdk/
-          curl -L -o /tmp/sdk.zip "${SDK_URL}" || {
-            echo "::error::Impossible de télécharger le SDK. Vérifier l'URL sur developer.garmin.com/connect-iq/sdk/"
-            exit 1
-          }
-          
-          unzip -q /tmp/sdk.zip -d $HOME/connectiq-sdk
-          rm /tmp/sdk.zip
-          
-          # Rendre les binaires exécutables
-          chmod +x $HOME/connectiq-sdk/bin/*
-          echo "$HOME/connectiq-sdk/bin" >> $GITHUB_PATH
+          curl -s https://raw.githubusercontent.com/lindell/connect-iq-sdk-manager-cli/master/install.sh | sudo sh -s -- -b /usr/local/bin
 
-      # Accepter la licence SDK (requis pour monkeyc)
-      - name: Accept SDK License
+      - name: Accept license & login
+        env:
+          GARMIN_USERNAME: ${{ secrets.GARMIN_USERNAME }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
         run: |
-          mkdir -p $HOME/.Garmin/ConnectIQ
-          touch $HOME/.Garmin/ConnectIQ/sdkman.properties
-          echo "SDKPath=$HOME/connectiq-sdk" > $HOME/.Garmin/ConnectIQ/sdkman.properties
+          connect-iq-sdk-manager agreement accept
+          connect-iq-sdk-manager login
 
-      # Télécharger les device files (nécessaire pour la compilation)
-      - name: Download Device Files
+      - name: Install SDK
         run: |
-          DEVICE_URL="https://developer.garmin.com/downloads/connect-iq/devices/"
-          mkdir -p $HOME/.Garmin/ConnectIQ/Devices
-          
-          echo "::notice::Si le device d2airx10 n'est pas trouvé, télécharger manuellement le device package depuis le SDK Manager"
-          # Le SDK Manager gère normalement le téléchargement des devices
-          # En CI, on peut compiler avec un device générique si le spécifique manque
+          connect-iq-sdk-manager sdk set 7.4.3
+          echo "$(connect-iq-sdk-manager sdk current-path --bin)" >> $GITHUB_PATH
 
-      # Générer une clé développeur temporaire (ou utiliser un secret)
-      - name: Generate Developer Key
+      - name: Download device files
         run: |
-          if [ -n "${{ secrets.GARMIN_DEV_KEY }}" ]; then
-            echo "${{ secrets.GARMIN_DEV_KEY }}" | base64 -d > $HOME/developer_key.der
-            echo "Clé développeur chargée depuis les secrets"
-          else
-            # Générer une clé temporaire pour le build
-            openssl genrsa -out /tmp/dev_key.pem 4096
-            openssl pkcs8 -topk8 -inform PEM -outform DER -in /tmp/dev_key.pem -out $HOME/developer_key.der -nocrypt
-            rm /tmp/dev_key.pem
-            echo "::warning::Clé développeur temporaire générée. Pour du sideloading persistant, ajouter GARMIN_DEV_KEY en secret (base64 du .der)"
-          fi
+          connect-iq-sdk-manager device download --manifest=manifest.xml
 
-      # Compiler l'application
-      - name: Compile
+      - name: Generate developer key
         run: |
-          echo "=== Compilation pour D2 Air X10 ==="
-          
-          # Tenter avec d2airx10 ; fallback sur round-416x416 si device absent
+          openssl genrsa -out /tmp/key.pem 4096
+          openssl pkcs8 -topk8 -inform PEM -outform DER \
+            -in /tmp/key.pem -out /tmp/developer_key.der -nocrypt
+
+      - name: Compile PRG
+        run: |
+          mkdir -p bin
           monkeyc \
             -d d2airx10 \
             -f monkey.jungle \
             -o bin/OpenAipMap.prg \
-            -y $HOME/developer_key.der \
-            -w \
-            2>&1 || {
-              echo "::warning::Compilation d2airx10 échouée, vérifier le device ID dans le SDK Manager"
-              exit 1
-            }
-          
-          echo "=== Build OK ==="
-          ls -la bin/
+            -y /tmp/developer_key.der \
+            -w
 
-      # Produire aussi le .iq pour le store (optionnel)
-      - name: Package for Store
-        if: success()
+      - name: Package IQ (store)
         continue-on-error: true
         run: |
-          monkeyc \
-            -e \
+          monkeyc -e \
             -o bin/OpenAipMap.iq \
             -f monkey.jungle \
-            -y $HOME/developer_key.der \
-            -w \
-            2>&1 || echo "::warning::Package .iq échoué (non bloquant)"
+            -y /tmp/developer_key.der -w
 
-      # Uploader les artifacts — récupérables depuis GitHub Mobile
-      - name: Upload Build Artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: openaip-map-garmin
-          path: |
-            bin/OpenAipMap.prg
-            bin/OpenAipMap.iq
-          if-no-files-found: error
+          name: openaip-map-d2airx10
+          path: bin/
           retention-days: 30
