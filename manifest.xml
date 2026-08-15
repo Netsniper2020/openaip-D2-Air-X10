@@ -6,7 +6,7 @@
              version="3">
 
     <iq:application
-        id="com.acrc.openaipmap"
+        id="dd8edcf8-bc58-440a-8997-3d3bac2a5acf"
         type="watch-app"
         name="@Strings.AppName"
         entry="OpenAipApp"
