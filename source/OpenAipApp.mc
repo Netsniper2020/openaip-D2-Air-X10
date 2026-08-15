@@ -23,7 +23,8 @@ class OpenAipApp extends Application.AppBase {
         return [_mapView, delegate];
     }
 
-    function onPosition(info) {
+    // Signature exacte requise par le SDK 9.x
+    function onPosition(info as Position.Info) as Void {
         if (_mapView != null) {
             _mapView.updatePosition(info);
             WatchUi.requestUpdate();
@@ -31,7 +32,7 @@ class OpenAipApp extends Application.AppBase {
     }
 
     function onStop(state) {
-        Position.enableLocationEvents(Position.LOCATION_DISABLE, method(:onPosition));
+        Position.enableLocationEvents(Position.LOCATION_DISABLE, null);
     }
 
     function onSettingsChanged() {

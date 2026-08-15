@@ -2,6 +2,7 @@ using Toybox.Communications;
 using Toybox.Application;
 using Toybox.Lang;
 using Toybox.WatchUi;
+using Toybox.Graphics;
 
 class TileManager {
 
@@ -115,7 +116,7 @@ class TileManager {
         return before + replace + after;
     }
 
-    function onTileReceived(responseCode, data) {
+    function onTileReceived(responseCode as Lang.Number, data as Graphics.BitmapReference or WatchUi.BitmapResource or Null) as Void {
         _downloading = false;
         if (responseCode == 200 && data != null) {
             evictIfNeeded();
