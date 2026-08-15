@@ -1,8 +1,3 @@
-# Compile l'app Connect IQ via connect-iq-sdk-manager-cli
-# Secrets GitHub requis :
-#   GARMIN_USERNAME : email du compte Garmin developer
-#   GARMIN_PASSWORD : mot de passe Garmin
-
 name: Build Connect IQ
 
 on:
@@ -44,11 +39,9 @@ jobs:
         run: |
           connect-iq-sdk-manager device download --manifest=manifest.xml
 
-      - name: Generate developer key
+      - name: Setup developer key
         run: |
-          openssl genrsa -out /tmp/key.pem 4096
-          openssl pkcs8 -topk8 -inform PEM -outform DER \
-            -in /tmp/key.pem -out /tmp/developer_key.der -nocrypt
+          echo "${{ secrets.GARMIN_DEV_KEY }}" | base64 -d > /tmp/developer_key.der
 
       - name: Compile PRG
         run: |
@@ -60,8 +53,7 @@ jobs:
             -y /tmp/developer_key.der \
             -w
 
-      - name: Package IQ (store)
-        continue-on-error: true
+      - name: Package IQ (store/beta)
         run: |
           monkeyc -e \
             -o bin/OpenAipMap.iq \
