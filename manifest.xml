@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!-- manifest.xml — OpenAIP Map for Garmin D2 Air X10
+     Vérifier le product-id exact dans le SDK Manager Connect IQ.
+     Le nom "d2airx10" est une estimation ; corriger si nécessaire. -->
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq"
+             version="3">
+
+    <iq:application
+        id="com.acrc.openaipmap"
+        type="watch-app"
+        name="@Strings.AppName"
+        entry="OpenAipApp"
+        launcherIcon="@Drawables.LauncherIcon"
+        minSdkVersion="4.2.0">
+
+        <iq:products>
+            <iq:product id="d2airx10" />
+            <!-- Ajouter d'autres montres si besoin :
+            <iq:product id="fenix7" />
+            -->
+        </iq:products>
+
+        <iq:permissions>
+            <iq:uses-permission id="Communications" />
+            <iq:uses-permission id="Positioning" />
+        </iq:permissions>
+
+        <iq:languages>
+            <iq:language>fre</iq:language>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+
+    </iq:application>
+
+</iq:manifest>
